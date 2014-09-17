@@ -173,6 +173,9 @@
 # [*package*]
 #   The name of postgresql package
 #
+# [*package_contrib*]
+#   The name of postgresql-contrib package
+#
 # [*service*]
 #   The name of postgresql service
 #
@@ -292,6 +295,7 @@ class postgresql (
   $debug                 = params_lookup( 'debug' , 'global' ),
   $audit_only            = params_lookup( 'audit_only' , 'global' ),
   $package               = params_lookup( 'package' ),
+  $package_contrib       = params_lookup( 'package_contrib' ),
   $service               = params_lookup( 'service' ),
   $service_status        = params_lookup( 'service_status' ),
   $process               = params_lookup( 'process' ),
@@ -445,6 +449,15 @@ class postgresql (
     default     => $postgresql::package,
   }
 
+  $real_package_contrib = $postgresql::package_contrib ? {
+    ''          => $::operatingsystem ? {
+      /(?i:Debian|Ubuntu|Mint)/       => "postgresql-contrib-${real_version}",
+      /(?i:RedHat|Centos|Scientific)/ => "postgresql${real_version_short}-contrib",
+      default                         => "postgresql${real_version}-contrib",
+    },
+    default     => $postgresql::package_contrib,
+  }
+
   $real_service = $postgresql::service ? {
     ''          => $::operatingsystem ? {
       /(?i:RedHat|Centos|Scientific)/ => $postgresql::bool_use_postgresql_repo ? {
@@ -519,6 +532,10 @@ class postgresql (
   package { 'postgresql':
     ensure => $postgresql::manage_package,
     name   => $postgresql::real_package,
+  }
+  package { 'postgresql-contrib':
+    ensure => $postgresql::manage_package,
+    name   => $postgresql::real_package_contrib,
   }
 
   service { 'postgresql':

@@ -37,6 +37,7 @@ class postgresql::params {
   ### Application related parameters
 
   $package = ''
+  $package_contrib = ''
 
   $service = ''
 
