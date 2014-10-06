@@ -117,4 +117,19 @@ define postgresql::role(
     command => $db_command,
     require => $db_require,
   }
+
+  if $password {
+    if($password =~ /^md5.+/) {
+      $pwd_hash_sql = $password
+    } else {
+      $pwd_md5 = md5("${password}${rolename}")
+      $pwd_hash_sql = "md5${pwd_md5}"
+    }
+    exec { "postgres-update-password-role-${name}":
+      user    => $postgresql::process_user,
+      path    => '/usr/bin:/bin:/usr/bin:/sbin',
+      unless  => "echo \"SELECT usename FROM pg_shadow WHERE usename='${rolename}' and passwd='${pwd_hash_sql}'\"|psql|grep ${rolename}",
+      command => "echo \"ALTER ROLE \\\"${rolename}\\\" WITH ENCRYPTED PASSWORD '${pwd_hash_sql}'\"|psql",
+    }
+  }
 }
